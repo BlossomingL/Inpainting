@@ -1,0 +1,5 @@
+model_logs
+neuralgym_logs
+data
+*.flist
+*.npz
