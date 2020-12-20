@@ -1,9 +1,9 @@
 # parameters
-DATASET: 'celeba'  # 'tmnist', 'dtd', 'places2', 'celeba', 'imagenet', 'cityscapes'
+DATASET: 'paris'  # 'tmnist', 'dtd', 'places2', 'celeba', 'imagenet', 'cityscapes', 'Paris'
 RANDOM_CROP: True
-VAL: False
-LOG_DIR: full_model_celeba_256
-MODEL_RESTORE: ''  # '20180115220926508503_jyugpu0_places2_NORMAL_wgan_gp_full_model'
+VAL: True
+LOG_DIR: full_model_paris_256 # full_model_celeba_256
+MODEL_RESTORE: '20201210220500246444_linx_paris_NORMAL_wgan_gp_full_model_paris_256'  # '20180115220926508503_jyugpu0_places2_NORMAL_wgan_gp_full_model'
 
 GAN: 'wgan_gp'  # 'dcgan', 'lsgan', 'wgan_gp', 'one_wgan_gp'
 PRETRAIN_COARSE_NETWORK: False
@@ -50,14 +50,17 @@ DATA_FLIST:
     'data/imagenet/train_shuffled.flist',
     'data/imagenet/validation_static_view.flist',
   ]
-
+  paris: [
+    '/home/linx/new_disk/Program/DeepLearning/Inpainting/data/paris/train.flist',
+    '/home/linx/new_disk/Program/DeepLearning/Inpainting/data/paris/valid.flist'
+  ]
 STATIC_VIEW_SIZE: 30
 IMG_SHAPES: [256, 256, 3]
 HEIGHT: 128
 WIDTH: 128
 MAX_DELTA_HEIGHT: 32
 MAX_DELTA_WIDTH: 32
-BATCH_SIZE: 4
+BATCH_SIZE: 8
 VERTICAL_MARGIN: 0
 HORIZONTAL_MARGIN: 0
 

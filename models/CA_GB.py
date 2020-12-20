@@ -13,10 +13,10 @@ from neuralgym.ops.layers import flatten, resize
 from neuralgym.ops.gan_ops import gan_wgan_loss, gradients_penalty
 from neuralgym.ops.gan_ops import random_interpolates
 
-from inpaint_ops import gen_conv, gen_deconv, dis_conv
-from inpaint_ops import random_bbox, bbox2mask, local_patch
-from inpaint_ops import spatial_discounting_mask
-from inpaint_ops import resize_mask_like, contextual_attention
+from models.inpaint_ops import gen_conv, gen_deconv, dis_conv
+from models.inpaint_ops import random_bbox, bbox2mask, local_patch
+from models.inpaint_ops import spatial_discounting_mask
+from models.inpaint_ops import resize_mask_like, contextual_attention
 
 
 logger = logging.getLogger()
@@ -148,61 +148,48 @@ class InpaintCAModel(Model):
             pm = x
 
             # gradient branch
-            if config.ADD_GRADIENT_BRANCH:
-                grad_x_stage1 = self.get_grad.get_gradient_tf(x_gb_in)
-                x = gen_conv(grad_x_stage1, cnum, 5, 1, name='gbconv1')
-                x = gen_conv(x, 2 * cnum, 3, 2, name='gbconv2_downsample')
-                x = gen_conv(x, 2 * cnum, 3, 1, name='gbconv3')
-                x = tf.concat([x, x_feat1], axis=3)  # 融合主网络的修复信息
-                x = gen_conv(x, 2 * cnum, 3, 1, name='gbfushion1')
 
-                x = gen_conv(x, 4 * cnum, 3, 2, name='gbconv4_downsample')
-                x = gen_conv(x, 4 * cnum, 3, 1, name='gbconv5')
-                x = gen_conv(x, 4 * cnum, 3, 1, name='gbconv6')
-                x = tf.concat([x, x_feat2], axis=3)
-                x = gen_conv(x, 4 * cnum, 3, 1, name='gbfushiuon2')
+            grad_x_stage1 = self.get_grad.get_gradient_tf(x_gb_in)
+            x = gen_conv(grad_x_stage1, cnum, 5, 1, name='gbconv1')
+            x = gen_conv(x, 2 * cnum, 3, 2, name='gbconv2_downsample')
+            x = gen_conv(x, 2 * cnum, 3, 1, name='gbconv3')
+            x = tf.concat([x, x_feat1], axis=3)  # 融合主网络的修复信息
+            x = gen_conv(x, 2 * cnum, 3, 1, name='gbfushion1')
 
-                x = gen_conv(x, 4 * cnum, 3, rate=2, name='gbconv7_atrous')
-                x = gen_conv(x, 4 * cnum, 3, rate=4, name='gbconv8_atrous')
-                x = gen_conv(x, 4 * cnum, 3, rate=8, name='gbconv9_atrous')
-                x = gen_conv(x, 4 * cnum, 3, rate=16, name='gbconv10_atrous')
-                x = tf.concat([x, x_feat3], axis=3)
-                x = gen_conv(x, 4 * cnum, 3, 1, name='gbfushiuon3')
-                gb = x
+            x = gen_conv(x, 4 * cnum, 3, 2, name='gbconv4_downsample')
+            x = gen_conv(x, 4 * cnum, 3, 1, name='gbconv5')
+            x = gen_conv(x, 4 * cnum, 3, 1, name='gbconv6')
+            x = tf.concat([x, x_feat2], axis=3)
+            x = gen_conv(x, 4 * cnum, 3, 1, name='gbfushiuon2')
 
-                x = gen_conv(x, 4 * cnum, 3, 1, name='gbconv11')
-                x = gen_conv(x, 4 * cnum, 3, 1, name='gbconv12')
-                x = gen_deconv(x, 2 * cnum, name='gbconv13_upsample')
-                x = gen_conv(x, 2 * cnum, 3, 1, name='gbconv14')
-                x = gen_deconv(x, cnum, name='gbconv15_upsample')
-                x = gen_conv(x, cnum // 2, 3, 1, name='gbconv16')
-                x = gen_conv(x, 3, 3, 1, activation=None, name='gbconv17')
-                x_gb = tf.clip_by_value(x, -1., 1.)
+            x = gen_conv(x, 4 * cnum, 3, rate=2, name='gbconv7_atrous')
+            x = gen_conv(x, 4 * cnum, 3, rate=4, name='gbconv8_atrous')
+            x = gen_conv(x, 4 * cnum, 3, rate=8, name='gbconv9_atrous')
+            x = gen_conv(x, 4 * cnum, 3, rate=16, name='gbconv10_atrous')
+            x = tf.concat([x, x_feat3], axis=3)
+            x = gen_conv(x, 4 * cnum, 3, 1, name='gbfushiuon3')
+            gb = x
 
-                x = tf.concat([x_hallu, pm, gb], axis=3)
-                x = gen_conv(x, 4*cnum, 3, 1, name='allconv11')
-                x = gen_conv(x, 4*cnum, 3, 1, name='allconv12')
-                x = gen_deconv(x, 2*cnum, name='allconv13_upsample')
-                x = gen_conv(x, 2*cnum, 3, 1, name='allconv14')
-                x = gen_deconv(x, cnum, name='allconv15_upsample')
-                x = gen_conv(x, cnum//2, 3, 1, name='allconv16')
-                x = gen_conv(x, 3, 3, 1, activation=None, name='allconv17')
-                x_stage2 = tf.clip_by_value(x, -1., 1.)
+            x = gen_conv(x, 4 * cnum, 3, 1, name='gbconv11')
+            x = gen_conv(x, 4 * cnum, 3, 1, name='gbconv12')
+            x = gen_deconv(x, 2 * cnum, name='gbconv13_upsample')
+            x = gen_conv(x, 2 * cnum, 3, 1, name='gbconv14')
+            x = gen_deconv(x, cnum, name='gbconv15_upsample')
+            x = gen_conv(x, cnum // 2, 3, 1, name='gbconv16')
+            x = gen_conv(x, 3, 3, 1, activation=None, name='gbconv17')
+            x_gb = tf.clip_by_value(x, -1., 1.)
 
-                return x_stage1, x_stage2, x_gb, grad_x_stage1, offset_flow
+            x = tf.concat([x_hallu, pm, gb], axis=3)
+            x = gen_conv(x, 4*cnum, 3, 1, name='allconv11')
+            x = gen_conv(x, 4*cnum, 3, 1, name='allconv12')
+            x = gen_deconv(x, 2*cnum, name='allconv13_upsample')
+            x = gen_conv(x, 2*cnum, 3, 1, name='allconv14')
+            x = gen_deconv(x, cnum, name='allconv15_upsample')
+            x = gen_conv(x, cnum//2, 3, 1, name='allconv16')
+            x = gen_conv(x, 3, 3, 1, activation=None, name='allconv17')
+            x_stage2 = tf.clip_by_value(x, -1., 1.)
 
-            else:
-
-                x = tf.concat([x_hallu, pm], axis=3)
-                x = gen_conv(x, 4 * cnum, 3, 1, name='allconv11')
-                x = gen_conv(x, 4 * cnum, 3, 1, name='allconv12')
-                x = gen_deconv(x, 2 * cnum, name='allconv13_upsample')
-                x = gen_conv(x, 2 * cnum, 3, 1, name='allconv14')
-                x = gen_deconv(x, cnum, name='allconv15_upsample')
-                x = gen_conv(x, cnum // 2, 3, 1, name='allconv16')
-                x = gen_conv(x, 3, 3, 1, activation=None, name='allconv17')
-                x_stage2 = tf.clip_by_value(x, -1., 1.)
-                return x_stage1, x_stage2, offset_flow
+            return x_stage1, x_stage2, x_gb, grad_x_stage1, offset_flow
 
     def build_wgan_local_discriminator(self, x, reuse=False, training=True, scope_name='discriminator_local'):
         with tf.variable_scope(scope_name, reuse=reuse):
@@ -454,12 +441,17 @@ class InpaintCAModel(Model):
         masks = tf.cast(masks_raw[0:1, :, :, 0:1] > 127.5, tf.float32)
 
         batch_pos = batch_raw / 127.5 - 1.
+        gb_gt = self.get_grad.get_gradient_tf(batch_pos)
+
         batch_incomplete = batch_pos * (1. - masks)
         # inpaint
-        x1, x2, flow = self.build_inpaint_net(
+        x1, x2, x_gb, grad_x_stage1, flow = self.build_inpaint_net(
             batch_incomplete, masks, reuse=reuse, training=is_training,
             config=None)
+        batch_complete_gb = x_gb * masks + gb_gt * (1. - masks)
+
         batch_predict = x2
         # apply mask and reconstruct
-        batch_complete = batch_predict*masks + batch_incomplete*(1-masks)
-        return batch_complete
+        batch_complete = batch_predict * masks + batch_incomplete*(1 - masks)
+
+        return batch_complete, gb_gt, batch_complete_gb

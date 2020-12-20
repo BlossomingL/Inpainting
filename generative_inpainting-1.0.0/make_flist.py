@@ -4,8 +4,8 @@
 # @File    : make_flist.py
 
 import os
-
-dataset_path = '/media/linx/dataset/img_align_celeba'
+import random
+dataset_path = '/media/linx/dataset/Paris_StreetView_Dataset'
 
 
 def mk_flist(root_path):
@@ -16,8 +16,12 @@ def mk_flist(root_path):
     test_list = os.listdir(test_path)
 
     with open('train.flist', 'w') as f:
+        all_path = []
         for name in train_list:
             path = train_path + '/' + name + '\n'
+            all_path.append(path)
+        random.shuffle(all_path)
+        for path in all_path:
             f.write(path)
 
     with open('valid.flist', 'w') as f:
