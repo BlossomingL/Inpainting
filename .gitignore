@@ -9,3 +9,4 @@ data
 generative_inpainting-1.0.0/model_logs
 generative_inpainting_gradient_branch/model_logs
 glcic-senet/log
+glcic-senet/contextual_loss/vgg16-397923af.pth
