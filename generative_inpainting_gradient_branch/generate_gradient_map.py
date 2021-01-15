@@ -229,7 +229,8 @@ def generate_gradient_map_pytorch(LR_path):
 
 def generate_gradient_map_tensorflow(LR_path):
     img_LR = cv2.imread(LR_path, cv2.IMREAD_UNCHANGED)
-    img_LR = img_LR.astype(np.float32) / 255.
+    # img_LR = img_LR.astype(np.float32) / 255.
+    img_LR = img_LR.astype(np.float32) / 127.5 - 1.
 
     # BGR to RGB, HWC to CHW, numpy to tensor
     # if img_LR.shape[2] == 3:
@@ -245,20 +246,22 @@ def generate_gradient_map_tensorflow(LR_path):
 
     print(gradient_img.shape)
     sess = tf.InteractiveSession()
+    gradient_img = tf.clip_by_value(
+                (tf.reverse(gradient_img, [-1])+1.)*127.5, 0., 255.)
     gradient_img = tf.squeeze(gradient_img, 0).eval()
 
-    min_max = (0, 1)
-    gradient_img = np.clip(gradient_img, 0, 1)  # clamp
-
-    gradient_img = (gradient_img - min_max[0]) / (min_max[1] - min_max[0])  # to range [0,1]
-    gradient_img = (gradient_img * 255.0).round().astype(np.uint8)
-    gradient_img = np.mean(gradient_img, 2)
+    # min_max = (0, 1)
+    # gradient_img = np.clip(gradient_img, 0, 1)  # clamp
+    #
+    # gradient_img = (gradient_img - min_max[0]) / (min_max[1] - min_max[0])  # to range [0,1]
+    # gradient_img = (gradient_img * 255.0).round().astype(np.uint8)
+    # gradient_img = np.mean(gradient_img, 2)
     print(gradient_img.shape)
     save_img(gradient_img, 'gradient_img.png')
 
 
 if __name__ == '__main__':
-    LR_path = '/home/linx/桌面/2020-12-01 19-19-37屏幕截图.png'
+    LR_path = '/media/linx/dataset/Paris_StreetView_Dataset/test/001_im.png'
     generate_gradient_map_tensorflow(LR_path)
 
 

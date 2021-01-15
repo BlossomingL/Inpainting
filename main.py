@@ -13,8 +13,9 @@ def main():
     parser.add_argument('--mode', default='concanate', choices=['train', 'test', 'concanate'], help='选择程序运行模式')
 
     # 如果选择测试
+    parser.add_argument('--mask_mode', default='center', choices=['center', 'random'])
     parser.add_argument('--test_deepFillV1', default=False, action='store_true', help='是否测试deepFillV1')
-    parser.add_argument('--test_deepFillV1_gradient_branch', default=True, action='store_true', help='是否测试deepFillV1+梯度分支网络')
+    parser.add_argument('--test_deepFillV1_gradient_branch', default=False, action='store_true', help='是否测试deepFillV1+梯度分支网络')
     parser.add_argument('--test_deepFillV1_gradient_branch_SENet', default=False, action='store_true', help='是否测试deepFillV1+梯度分支网络+SENet')
     parser.add_argument('--test_PM', default=False, help='是否测试PM算法')
     parser.add_argument('--test_CE', default=False, help='是否测试CE算法')

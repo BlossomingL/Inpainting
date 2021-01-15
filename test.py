@@ -7,12 +7,12 @@ import numpy as np
 import tensorflow as tf
 from neuralgym.ops.image_ops import np_random_crop
 import os
+from utils import gen_input_mask
 
 
-def test(args, image, mask, output_path):
+def test(args, image, mask, output_path, count):
 
-    h, w, _ = mask.shape
-
+    h, w, _ = 256, 256, 3
     if args.rand_crop:
         image, random_h, random_w = np_random_crop(
             image, (h, w),
@@ -20,11 +20,16 @@ def test(args, image, mask, output_path):
 
     grid = 8
     image = image[:h // grid * grid, :w // grid * grid, :]
-    mask = mask[:h // grid * grid, :w // grid * grid, :]
     image = np.expand_dims(image, 0)
-    mask = np.expand_dims(mask, 0)
-    input_image = np.concatenate([image, mask], axis=2)
 
+    if args.mask_mode == 'random' and args.test_deepFillV1:
+        mask = gen_input_mask(image.shape, hole_size=((64, 128), (64, 128)), count=count, max_holes=3)
+
+    else:
+        mask = mask[:h // grid * grid, :w // grid * grid, :]
+        mask = np.expand_dims(mask, 0)
+
+    input_image = np.concatenate([image, mask], axis=2)
     print('Shape of image: {}'.format(image.shape))
 
     sess_config = tf.ConfigProto()
@@ -59,7 +64,6 @@ def test(args, image, mask, output_path):
             print('CA Model loaded.')
             result = sess.run(output)
             incomplete = sess.run(incomplete)
-            print(res.shape, incomplete.shape, result.shape)
             res = np.concatenate((res[0], incomplete[0][:, :, ::-1], result[0][:, :, ::-1]), axis=1)
             cv2.imwrite(output_path, res)
 
@@ -94,13 +98,28 @@ def test(args, image, mask, output_path):
 
 def test_batch(args):
     imgs = os.listdir(args.batch_image)
-    mask = cv2.imread(args.mask)
+    mask = None
+    if args.mask_mode == 'center':
+        mask = cv2.imread(args.mask)
 
+    if args.test_deepFillV1_gradient_branch and args.mask_mode == 'random':
+        masks_name = os.listdir('masks')
+        masks_name.sort(key=lambda x: int(x[:-4]))  # 乱序问题
+        masks = []
+        for name in masks_name:
+            print(name)
+            total_name = os.path.join('masks', name)
+            masks.append(cv2.imread(total_name))
+
+    count = 0
     for img_name in imgs:
         path = os.path.join(args.batch_image, img_name)
         image = cv2.imread(path)
         output_path = os.path.join(args.output_path, img_name)
-        test(args, image, mask, output_path)
+        if args.test_deepFillV1_gradient_branch and args.mask_mode == 'random':
+            mask = masks[count]
+        test(args, image, mask, output_path, count)
+        count += 1
 
 
 def test_single(args):
@@ -129,7 +148,27 @@ def concanate(args):
         cv2.imwrite(output_path, res)
 
 
+def add_margin(path):
+    out_file = '/home/linx/new_disk/result/Paris/center/compare_baseline_to_GB_可用_margin'
+    imgs = os.listdir(path)
+    margin = np.ones([256, 2, 3]) * 255
+    for img_name in imgs:
+        img_path = os.path.join(path, img_name)
+        output_path = os.path.join(out_file, img_name)
 
+        img = cv2.imread(img_path)
+        img = np.array_split(img, 5, axis=1)
+        arr = []
+        for i in range(len(img)):
+            arr.append(img[i])
+            arr.append(margin)
+        res = np.concatenate(arr, axis=1)
+        print(res.shape)
+        cv2.imwrite(output_path, res)
+
+
+if __name__ == '__main__':
+    add_margin('/home/linx/new_disk/result/Paris/center/compare_baseline_to_GB_可用')
 
 
 
