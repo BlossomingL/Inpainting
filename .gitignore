@@ -5,5 +5,6 @@ data
 *.npz
 *.png
 *.jpg
+*.pth
 generative_inpainting-1.0.0/model_logs
 generative_inpainting_gradient_branch/model_logs
